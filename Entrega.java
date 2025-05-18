@@ -7,7 +7,7 @@ import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.IntStream;
+import java.util.stream.IntStream; 
 
 /*
  * Aquesta entrega consisteix en implementar tots els mètodes anomenats "exerciciX". Ara mateix la
