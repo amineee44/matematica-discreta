@@ -147,31 +147,176 @@ class Entrega {
      *
      * Pista: Cercau informació sobre els nombres de Stirling.
      */
-    static int exercici1(int[] a) {
-      throw new UnsupportedOperationException("pendent");
-    }
+      static int exercici1(int[] a) {
+          int n = a.length;
+          int[][] S = new int[n + 1][n + 1];
+          S[0][0] = 1;
+          for (int i = 1; i <= n; i++) {
+              for (int k = 1; k <= i; k++) {
+                  // S[i][k] = S(i-1, k-1) + k * S(i-1, k)
+                  S[i][k] = S[i - 1][k - 1] + k * S[i - 1][k];
+              }
+          }
+          int bell = 0;
+          // Suma de los Números de Stirling S(n, k) para obtener B_n.
+          for (int x : S[n]) {
+              bell += x;
+          }
+          return bell;
+      }
+      
+     
+      static int exercici2(int[] a, int[][] rel) {
+          int n = a.length;
+          boolean[][] R = new boolean[n][n];
 
-    /*
-     * Trobau el cardinal de la relació d'ordre parcial sobre `a` més petita que conté `rel` (si
-     * existeix). En altres paraules, el cardinal de la seva clausura reflexiva, transitiva i
-     * antisimètrica.
-     *
-     * Si no existeix, retornau -1.
-     */
-    static int exercici2(int[] a, int[][] rel) {
-      throw new UnsupportedOperationException("pendent");
-    }
+          // Inicializar relación R.
+          for (int[] p : rel) {
+              int i = indexOf(a, p[0]);
+              int j = indexOf(a, p[1]);
+              if (i >= 0 && j >= 0) {
+                  R[i][j] = true;
+              }
+          }
 
-    /*
-     * Donada una relació d'ordre parcial `rel` definida sobre `a` i un subconjunt `x` de `a`,
-     * retornau:
-     * - L'ínfim de `x` si existeix i `op` és false
-     * - El suprem de `x` si existeix i `op` és true
-     * - null en qualsevol altre cas
-     */
-    static Integer exercici3(int[] a, int[][] rel, int[] x, boolean op) {
-      throw new UnsupportedOperationException("pendent");
-    }
+          // Añadir reflexividad.
+          for (int i = 0; i < n; i++) {
+              R[i][i] = true;
+          }
+
+          // Calcular cierre transitivo (Floyd-Warshall).
+          for (int k = 0; k < n; k++) {
+              for (int i = 0; i < n; i++) {
+                  if (R[i][k]) {
+                      for (int j = 0; j < n; j++) {
+                          if (R[k][j]) {
+                              R[i][j] = true;
+                          }
+                      }
+                  }
+              }
+          }
+
+          // Comprobar antisimetría.
+          for (int i = 0; i < n; i++) {
+              for (int j = 0; j < n; j++) {
+                  if (i != j && R[i][j] && R[j][i]) {
+                      return -1; // No es antisimétrica.
+                  }
+              }
+          }
+
+          // Contar elementos en la relación final.
+          int count = 0;
+          for (boolean[] row : R) {
+              for (boolean b : row) {
+                  if (b) {
+                      count++;
+                  }
+              }
+          }
+          return count;
+      }
+    
+      static Integer exercici3(int[] a, int[][] rel, int[] x, boolean op) {
+          int n = a.length;
+          boolean[][] R = new boolean[n][n];
+
+          // Inicializar R con las relaciones.
+          for (int[] p : rel) {
+              int i = indexOf(a, p[0]);
+              int j = indexOf(a, p[1]);
+              if (i >= 0 && j >= 0) {
+                  R[i][j] = true;
+              }
+          }
+
+          // Añadir reflexividad.
+          for (int i = 0; i < n; i++) {
+              R[i][i] = true;
+          }
+
+          // Calcular cierre transitivo.
+          for (int k = 0; k < n; k++) {
+              for (int i = 0; i < n; i++) {
+                  if (R[i][k]) {
+                      for (int j = 0; j < n; j++) {
+                          if (R[k][j]) {
+                              R[i][j] = true;
+                          }
+                      }
+                  }
+              }
+          }
+
+          // Mapear elementos de 'x' a índices.
+          List<Integer> xs = new ArrayList<>();
+          for (int v : x) {
+              int idx = indexOf(a, v);
+              if (idx >= 0) {
+                  xs.add(idx);
+              }
+          }
+
+          List<Integer> LB = new ArrayList<>(), UB = new ArrayList<>();
+
+          // Encontrar todas las cotas inferiores (LB) y superiores (UB).
+          for (int i = 0; i < n; i++) {
+              boolean lower = true, upper = true;
+              for (int e : xs) {
+                  if (!R[i][e]) {
+                      lower = false;
+                  }
+                  if (!R[e][i]) {
+                      upper = false;
+                  }
+                  if (!lower && !upper) {
+                      break;
+                  }
+              }
+              if (lower) {
+                  LB.add(i);
+              }
+              if (upper) {
+                  UB.add(i);
+              }
+          }
+
+          if (!op) { // Buscar GLB (Greatest Lower Bound).
+              for (int p : LB) {
+                  boolean isGLB = true;
+                  for (int q : LB) {
+                      if (!R[q][p]) {
+                          isGLB = false;
+                          break;
+                      }
+                  }
+                  if (isGLB) {
+                      return a[p];
+                  }
+              }
+          } else { // Buscar LUB (Least Upper Bound).
+              for (int p : UB) {
+                  boolean isLUB = true;
+                  for (int q : UB) {
+                      if (!R[p][q]) {
+                          isLUB = false;
+                          break;
+                      }
+                  }
+                  if (isLUB) {
+                      return a[p];
+                  }
+              }
+          }
+          return null; // No se encontró GLB/LUB.
+      }
+
+      /*
+     * Retorna el gráfico de la inversa (si es biyectiva),
+     * una inversa izquierda (si es inyectiva),
+     * una inversa derecha (si es sobreyectiva), o null.
+       */
 
     /*
      * Donada una funció `f` de `a` a `b`, retornau:
@@ -180,13 +325,81 @@ class Entrega {
      *  - Sinó, el graf d'una inversa seva per la dreta (si existeix)
      *  - Sinó, null.
      */
-    static int[][] exercici4(int[] a, int[] b, Function<Integer, Integer> f) {
-      throw new UnsupportedOperationException("pendent");
+      static int[][] exercici4(int[] a, int[] b, Function<Integer, Integer> f) {
+          int m = b.length;
+          int[] counts = new int[m];
+          List<int[]> images = new ArrayList<>();
+          // Recollim totes les imatges x → f(x) i comptem preimatges per cada y∈b
+          for (int xVal : a) {
+              int yVal = f.apply(xVal);
+              images.add(new int[]{xVal, yVal});
+              int j = indexOf(b, yVal);
+              if (j >= 0) {
+                  counts[j]++;
+              }
+          }
+          boolean injectiva = true;
+          boolean sobreyectiva = true;
+          for (int c : counts) {
+              if (c == 0) {
+                  sobreyectiva = false;
+              }
+              if (c > 1) {
+                  injectiva = false;
+              }
+          }
+          // 1) Biyectiva → inversa exacta
+          if (injectiva && sobreyectiva) {
+              int[][] inv = new int[m][2];
+              for (int i = 0; i < m; i++) {
+                  inv[i] = new int[]{b[i], findPreimage(images, b[i])};
+              }
+              return lexSorted(inv);
+          }
+          // 2) Injectiva només → inversa per l'esquerra
+          if (injectiva) {
+              int[][] invL = new int[m][2];
+              for (int i = 0; i < m; i++) {
+                  invL[i] = new int[]{b[i], findPreimage(images, b[i])};
+              }
+              return lexSorted(invL);
+          }
+          // 3) Sobreyectiva només → inversa per la dreta
+          if (sobreyectiva) {
+              int[][] invR = new int[m][2];
+              for (int i = 0; i < m; i++) {
+                  invR[i] = new int[]{b[i], findPreimage(images, b[i])};
+              }
+              return lexSorted(invR);
+          }
+          // 4) Ni injectiva ni sobreyectiva → no hi ha inversa
+          return null;
+      }
+
+// Helper: retorna algun x tal que f(x)=y, o un element arbitrari de a
+      private static int findPreimage(List<int[]> images, int y) {
+          for (int[] p : images) {
+              if (p[1] == y) {
+                  return p[0];
+              }
+          }
+          return images.get(0)[0];
+      }
+        private static int indexOf(int[] arr, int value) {
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i] == value) {
+        return i;
     }
+  }
+  return -1;
+
 
     /*
      * Aquí teniu alguns exemples i proves relacionades amb aquests exercicis (vegeu `main`)
      */
+}
+
+    
     static void tests() {
       // Exercici 1
       // Nombre de particions
@@ -317,17 +530,103 @@ class Entrega {
      * Determinau si el graf `g` (no dirigit) té cicles.
      */
     static boolean exercici1(int[][] g) {
-      throw new UnsupportedOperationException("pendent");
-    }
+          int n = g.length;
+          boolean[] visited = new boolean[n];
+          for (int v = 0; v < n; v++) {
+              if (!visited[v]) {
+                  if (dfsCycle(v, -1, g, visited)) {
+                      return true;
+                  }
+              }
+          }
+          return false;
+      }
+
+      private static boolean dfsCycle(int v, int parent, int[][] g, boolean[] visited) {
+          visited[v] = true;
+          for (int nei : g[v]) {
+              if (nei == parent) {
+                  continue;
+              }
+              // Si l'element veí ja s'ha visitat, hi ha un cicle
+              if (visited[nei]) {
+                  return true;
+              }
+              // Si des d'aquest veí es detecta un cicle recursivament
+              if (dfsCycle(nei, v, g, visited)) {
+                  return true;
+              }
+          }
+          return false;
+      }
 
     /*
      * Determinau si els dos grafs són isomorfs. Podeu suposar que cap dels dos té ordre major que
      * 10.
      */
-    static boolean exercici2(int[][] g1, int[][] g2) {
-      throw new UnsupportedOperationException("pendent");
-    }
+      static boolean exercici2(int[][] g1, int[][] g2) {
+          int n = g1.length;
+          if (n != g2.length) {
+              return false;
+          }
 
+          int[] deg1 = new int[n], deg2 = new int[n];
+          boolean[][] adj1 = new boolean[n][n], adj2 = new boolean[n][n];
+          for (int i = 0; i < n; i++) {
+              deg1[i] = g1[i].length;
+              for (int j : g1[i]) {
+                  adj1[i][j] = true;
+                  adj1[j][i] = true; // Asegura que la matriz es simétrica para grafos no dirigidos
+              }
+              deg2[i] = g2[i].length;
+              for (int j : g2[i]) {
+                  adj2[i][j] = true;
+              }
+          }
+
+          int[] perm = new int[n];
+          boolean[] used = new boolean[n];
+          return isoBacktrack(0, n, deg1, deg2, adj1, adj2, perm, used);
+      }
+
+      private static boolean isoBacktrack(int idx, int n,
+              int[] deg1, int[] deg2,
+              boolean[][] adj1, boolean[][] adj2,
+              int[] perm, boolean[] used) {
+          if (idx == n) {
+              // Si hemos asignado una permutación para todos los vértices, hemos encontrado un isomorfismo.
+              return true;
+          }
+          for (int j = 0; j < n; j++) {
+              // Poda: Si el vértice j ya está usado o si los grados no coinciden, saltar.
+              if (used[j] || deg1[idx] != deg2[j]) {
+                  continue;
+              }
+
+              perm[idx] = j; // Asignar el vértice j de g2 al vértice idx de g1
+
+              boolean ok = true;
+              // Verificar la consistencia de las adyacencias con los vértices ya mapeados (0 a idx-1)
+              for (int k = 0; k < idx; k++) {
+                  // La adyacencia entre (idx, k) en g1 debe coincidir con la adyacencia entre (perm[idx], perm[k]) en g2.
+                  if (adj1[idx][k] != adj2[perm[idx]][perm[k]]) {
+                      ok = false;
+                      break;
+                  }
+              }
+              if (!ok) {
+                  // Si la adyacencia no es consistente, esta permutación no es válida, probar con el siguiente j.
+                  continue;
+              }
+
+              used[j] = true; // Marcar j como usado
+              if (isoBacktrack(idx + 1, n, deg1, deg2, adj1, adj2, perm, used)) {
+                  return true; // Si la recursión encuentra una solución, propagarla.
+              }
+              used[j] = false; // Backtrack: desmarcar j para explorar otras permutaciones.
+          }
+          return false; // No se encontró ninguna permutación válida para idx.
+      }
     /*
      * Determinau si el graf `g` (no dirigit) és un arbre. Si ho és, retornau el seu recorregut en
      * postordre desde el vèrtex `r`. Sinó, retornau null;
@@ -335,9 +634,54 @@ class Entrega {
      * En cas de ser un arbre, assumiu que l'ordre dels fills vé donat per l'array de veïns de cada
      * vèrtex.
      */
-    static int[] exercici3(int[][] g, int r) {
-      throw new UnsupportedOperationException("pendent");
-    }
+      static int[] exercici3(int[][] g, int r) {
+          int n = g.length;
+          boolean[] visited = new boolean[n];
+          List<Integer> post = new ArrayList<>();
+
+          // Un grafo es un árbol si es acíclico y conexo.
+          // Paso 1: DFS para detectar ciclos y construir el postorden.
+          if (!dfsTree(r, -1, g, visited, post)) {
+              return null; // Ciclo detectado, no es un árbol.
+          }
+
+          // Paso 2: Verificar la conexidad.
+          for (boolean v : visited) {
+              if (!v) {
+                  return null; // No todos los nodos fueron visitados, no es un árbol.
+              }
+          }
+
+          // Si es acíclico y conexo, es un árbol. Convertir postorden a array.
+          int[] res = new int[post.size()];
+          for (int i = 0; i < res.length; i++) {
+              res[i] = post.get(i);
+          }
+          return res;
+      }
+
+      private static boolean dfsTree(int v, int parent,
+              int[][] g, boolean[] visited, List<Integer> post) {
+          visited[v] = true; // Marcar como visitado.
+
+          for (int nei : g[v]) {
+              if (nei == parent) {
+                  continue; // Ignorar el padre.
+              }
+
+              if (visited[nei]) {
+                  return false; // Vecino ya visitado (y no es el padre) -> ciclo.
+              }
+
+              if (!dfsTree(nei, v, g, visited, post)) {
+                  return false; // Ciclo encontrado en un subárbol.
+              }
+          }
+
+          post.add(v); // Añadir al postorden.
+          return true; // No hay ciclo en este subárbol.
+      }
+
 
     /*
      * Suposau que l'entrada és un mapa com el següent, donat com String per files (vegeu els tests)
@@ -363,9 +707,50 @@ class Entrega {
      *
      * Si és impossible, retornau -1.
      */
-    static int exercici4(char[][] mapa) {
-      throw new UnsupportedOperationException("pendent");
-    }
+        static int exercici4(char[][] mapa) {
+            int rows = mapa.length, cols = mapa[0].length;
+            int start = -1;
+            for (int i = 0; i < rows && start < 0; i++) {
+                for (int j = 0; j < cols; j++) {
+                    if (mapa[i][j] == 'O') {
+                        start = i * cols + j;
+                        break;
+                    }
+                }
+            }
+            if (start < 0) {
+                return -1;
+            }
+
+            int max = rows * cols;
+            int[] q = new int[max], dist = new int[max];
+            Arrays.fill(dist, -1);
+            int head = 0, tail = 0;
+            q[tail++] = start;
+            dist[start] = 0;
+
+            int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+            while (head < tail) {
+                int cur = q[head++], cr = cur / cols, cc = cur % cols;
+                for (int[] d : dirs) {
+                    int nr = cr + d[0], nc = cc + d[1];
+                    if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) {
+                        continue;
+                    }
+                    char c = mapa[nr][nc];
+                    int idx = nr * cols + nc;
+                    if (c == '#' || dist[idx] != -1) {
+                        continue;
+                    }
+                    dist[idx] = dist[cur] + 1;
+                    if (c == 'D') {
+                        return dist[idx];
+                    }
+                    q[tail++] = idx;
+                }
+            }
+            return -1;
+        }
 
     /*
      * Aquí teniu alguns exemples i proves relacionades amb aquests exercicis (vegeu `main`)
