@@ -50,7 +50,7 @@ import java.util.stream.IntStream;
  * de texte estigui configurat amb codificació UTF-8.
  */
 class Entrega {
-  static final String[] NOMS = {};
+  static final String[] NOMS = {Pedro Gelabert, Abde Afkir, Amine Karab};
 
   /*
    * Aquí teniu els exercicis del Tema 1 (Lògica).
@@ -707,49 +707,68 @@ class Entrega {
      *
      * Si és impossible, retornau -1.
      */
-        static int exercici4(char[][] mapa) {
-            int rows = mapa.length, cols = mapa[0].length;
-            int start = -1;
-            for (int i = 0; i < rows && start < 0; i++) {
-                for (int j = 0; j < cols; j++) {
-                    if (mapa[i][j] == 'O') {
-                        start = i * cols + j;
-                        break;
-                    }
-                }
-            }
-            if (start < 0) {
-                return -1;
-            }
+      static int exercici4(char[][] mapa) {
+          // Nombre de files i columnes
+          int rows = mapa.length, cols = mapa[0].length;
+          // Índex lineal de l'origen 'O'
+          int start = -1;
+          // Cerquem 'O' i guardem la seva posició (fila * cols + columna)
+          for (int i = 0; i < rows && start < 0; i++) {
+              for (int j = 0; j < cols; j++) {
+                  if (mapa[i][j] == 'O') {
+                      start = i * cols + j;
+                      break;  // aturem el bucle interior quan trobem 'O'
+                  }
+              }
+          }
+          // Si no hi ha cap 'O', retornem -1
+          if (start < 0) {
+              return -1;
+          }
 
-            int max = rows * cols;
-            int[] q = new int[max], dist = new int[max];
-            Arrays.fill(dist, -1);
-            int head = 0, tail = 0;
-            q[tail++] = start;
-            dist[start] = 0;
+          // Mida màxima de la cua = total de cel·les
+          int max = rows * cols;
+          // q: cua per BFS, dist: distàncies inicialitzades a -1 (no visitat)
+          int[] q = new int[max], dist = new int[max];
+          Arrays.fill(dist, -1);
+          // Variables per gestionar la cua: head = índex de capçalera, tail = índex de cua
+          int head = 0, tail = 0;
+          // Iniciem BFS des de 'start'
+          q[tail++] = start;
+          dist[start] = 0;
 
-            int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
-            while (head < tail) {
-                int cur = q[head++], cr = cur / cols, cc = cur % cols;
-                for (int[] d : dirs) {
-                    int nr = cr + d[0], nc = cc + d[1];
-                    if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) {
-                        continue;
-                    }
-                    char c = mapa[nr][nc];
-                    int idx = nr * cols + nc;
-                    if (c == '#' || dist[idx] != -1) {
-                        continue;
-                    }
-                    dist[idx] = dist[cur] + 1;
-                    if (c == 'D') {
-                        return dist[idx];
-                    }
-                    q[tail++] = idx;
-                }
-            }
-            return -1;
+          // Moviments en 4 direccions: baix, dalt, dreta, esquerra
+          int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+          // Processam la cua fins buidar-la
+          while (head < tail) {
+              // Desencolem la cel·la actual
+              int cur = q[head++];
+              int cr = cur / cols, cc = cur % cols;  // fila i columna corresponents
+              // Exploració dels veïns
+              for (int[] d : dirs) {
+                  int nr = cr + d[0], nc = cc + d[1];
+                  // Saltar si surtim del mapa
+                  if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) {
+                      continue;
+                  }
+                  char c = mapa[nr][nc];
+                  int idx = nr * cols + nc;  // índex lineal del veí
+                  // Saltar si és mur '#' o ja visitat (dist[idx] != -1)
+                  if (c == '#' || dist[idx] != -1) {
+                      continue;
+                  }
+                  // Assignem la distància (dist del pare + 1)
+                  dist[idx] = dist[cur] + 1;
+                  // Si és destí 'D', retornem distància mínima trobada
+                  if (c == 'D') {
+                      return dist[idx];
+                  }
+                  // Enfilem aquest veí per continuar el BFS
+                  q[tail++] = idx;
+              }
+          }
+          // Si acabem i no trobem 'D', retornem -1
+          return -1;
         }
 
     /*
