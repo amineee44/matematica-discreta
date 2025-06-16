@@ -50,51 +50,84 @@ import java.util.stream.IntStream;
  * de texte estigui configurat amb codificació UTF-8.
  */
 class Entrega {
-  static final String[] NOMS = {Pedro Gelabert, Abde Afkir, Amine Karab};
+  static final String[] NOMS = {"Pedro Gelabert", "Abde Afkir", "Amine Karab"};
 
   /*
    * Aquí teniu els exercicis del Tema 1 (Lògica).
    */
   static class Tema1 {
-    /*
-     * Determinau si l'expressió és una tautologia o no:
-     *
-     * (((vars[0] ops[0] vars[1]) ops[1] vars[2]) ops[2] vars[3]) ...
-     *
-     * Aquí, vars.length == ops.length+1, i cap dels dos arrays és buid. Podeu suposar que els
-     * identificadors de les variables van de 0 a N-1, i tenim N variables diferents (mai més de 20
-     * variables).
-     *
-     * Cada ops[i] pot ser: CONJ, DISJ, IMPL, NAND.
-     *
-     * Retornau:
-     *   1 si és una tautologia
-     *   0 si és una contradicció
-     *   -1 en qualsevol altre cas.
-     *
-     * Vegeu els tests per exemples.
-     */
     static final char CONJ = '∧';
     static final char DISJ = '∨';
     static final char IMPL = '→';
     static final char NAND = '.';
 
     static int exercici1(char[] ops, int[] vars) {
-      throw new UnsupportedOperationException("pendent");
+        int numVariables = Arrays.stream(vars).max().orElse(-1) + 1;
+        if (numVariables == 0) return -1;
+        
+        boolean isTautology = true;
+        boolean isContradiction = true;
+        
+        int totalCombinations = 1 << numVariables;
+        for (int mask = 0; mask < totalCombinations; mask++) {
+            boolean[] values = new boolean[numVariables];
+            for (int i = 0; i < numVariables; i++) {
+                values[i] = ((mask >> i) & 1) == 1;
+            }
+            
+            boolean result = values[vars[0]];
+            for (int i = 0; i < ops.length; i++) {
+                boolean next = values[vars[i+1]];
+                switch (ops[i]) {
+                    case CONJ:
+                        result = result && next;
+                        break;
+                    case DISJ:
+                        result = result || next;
+                        break;
+                    case IMPL:
+                        result = !result || next;
+                        break;
+                    case NAND:
+                        result = !(result && next);
+                        break;
+                }
+            }
+            
+            if (result) {
+                isContradiction = false;
+            } else {
+                isTautology = false;
+            }
+            
+            if (!isTautology && !isContradiction) {
+                return -1;
+            }
+        }
+        
+        if (isTautology) return 1;
+        if (isContradiction) return 0;
+        return -1;
     }
 
-    /*
-     * Aquest mètode té de paràmetre l'univers (representat com un array) i els predicats
-     * adients `p` i `q`. Per avaluar aquest predicat, si `x` és un element de l'univers, podeu
-     * fer-ho com `p.test(x)`, que té com resultat un booleà (true si `P(x)` és cert).
-     *
-     * Amb l'univers i els predicats `p` i `q` donats, returnau true si la següent proposició és
-     * certa.
-     *
-     * (∀x : P(x)) <-> (∃!x : Q(x))
-     */
     static boolean exercici2(int[] universe, Predicate<Integer> p, Predicate<Integer> q) {
-      throw new UnsupportedOperationException("pendent");
+        boolean forAllP = true;
+        for (int x : universe) {
+            if (!p.test(x)) {
+                forAllP = false;
+                break;
+            }
+        }
+        
+        int countQ = 0;
+        for (int x : universe) {
+            if (q.test(x)) {
+                countQ++;
+            }
+        }
+        boolean existsUniqueQ = (countQ == 1);
+        
+        return forAllP == existsUniqueQ;
     }
 
     static void tests() {
@@ -833,11 +866,129 @@ class Entrega {
    * Si implementau algun dels exercicis així, tendreu un 0 d'aquell exercici.
    */
   static class Tema4 {
-    // Els penjarem més envant
+    /*
+     * Primer, codificau el missatge en blocs de longitud 2 amb codificació ASCII. Després encriptau
+     * el missatge utilitzant xifrat RSA amb la clau pública donada.
+     *
+     * Per obtenir els codis ASCII del String podeu utilitzar msg.getBytes().
+     *
+     * Podeu suposar que:
+     * - La longitud de msg és múltiple de 2
+     * - El valor de tots els caràcters de msg està entre 32 i 127.
+     * - La clau pública (n, e) és de la forma vista a les transparències.
+     * - n és major que 2¹⁴, i n² és menor que Integer.MAX_VALUE
+     *
+     * Pista: https://en.wikipedia.org/wiki/Exponentiation_by_squaring
+     */
+        
+    // función que calcula potencias con módulo para evitar desbordamientos: (base elevado a exp) módulo mod
+    static int modPow(int base, int exp, int mod) {
+        long res = 1, b = base % mod;
+        for (; exp > 0; exp >>= 1) {
+            if ((exp & 1) == 1) res = (res * b) % mod;
+            b = (b * b) % mod;
+        }
+        return (int) res;
+    }
+      
+    // inverso de e mod n : (a*x) % m = 1
+    static int modInverse(int a, int m) {
+        int m0 = m, t, x0 = 0, x1 = 1;
+        while (a > 1) {
+            int q = a / m;
+            t = m; m = a % m; a = t;
+            t = x0; x0 = x1 - q * x0; x1 = t;
+        }
+        return x1 < 0 ? x1 + m0 : x1;
+    }
+    
+    
+    static int[] exercici1(String msg, int n, int e) {
+        int[] res = new int[msg.length() / 2];
+        byte[] bytes = msg.getBytes();
+        for (int i = 0, j = 0; i < bytes.length; i += 2, j++) {
+            int val = (bytes[i] << 7) + bytes[i + 1];  
+            res[j] = modPow(val, e, n);
+        }
+        return res;
+    }
 
+    /*
+     * Primer, desencriptau el missatge utilitzant xifrat RSA amb la clau pública donada. Després
+     * descodificau el missatge en blocs de longitud 2 amb codificació ASCII (igual que l'exercici
+     * anterior, però al revés).
+     *
+     * Per construir un String a partir d'un array de bytes podeu fer servir el constructor
+     * new String(byte[]). Si heu de factoritzar algun nombre, ho podeu fer per força bruta.
+     *
+     * També podeu suposar que:
+     * - La longitud del missatge original és múltiple de 2
+     * - El valor de tots els caràcters originals estava entre 32 i 127.
+     * - La clau pública (n, e) és de la forma vista a les transparències.
+     * - n és major que 2¹⁴, i n² és menor que Integer.MAX_VALUE
+     */
+    static String exercici2(int[] m, int n, int e) {
+      // factorizamos n
+     int p = 0, q = 0;
+        for (int i = 2; i <= Math.sqrt(n); i++) {
+            if (n % i == 0) {
+                p = i; q = n / i;
+                break;
+            }
+        }
+    //phi de n = (p-1)*(q-1)
+    int phi = (p - 1) * (q - 1);
+
+    // hallamos d, la clave privada que cumple con (d*e) % phi = 1
+    int d = modInverse(e, phi);
+
+    // usamos la clave privada d para descifrar cada bloque cifrado 
+    char[] descifrado = new char[m.length * 2];
+    for (int i = 0; i < m.length; i++) {
+        int decodificado = modPow(m[i], d, n);
+
+    // separamos el numero en 2 caracteres originales usando base 128 en orden big-endian (primero el mas significativo)
+    descifrado[i * 2]     = (char) (decodificado >> 7);     // dividir entre 128
+    descifrado[i * 2 + 1] = (char) (decodificado & 0x7F);   // resto mod 128
+}
+
+    // reconstruimos mensaje original y lo devolvemos
+    return new String(descifrado);
+    }
+    
     static void tests() {
+      // Exercici 1
+      // Codificar i encriptar
+      test(4, 1, 1, () -> {
+        var n = 2*8209;
+        var e = 5;
+
+        var encr = exercici1("Patata", n, e);
+        return Arrays.equals(encr, new int[] { 4907, 4785, 4785 });
+      });
+
+      // Exercici 2
+      // Desencriptar i decodificar
+      test(4, 2, 1, () -> {
+        var n = 2*8209;
+        var e = 5;
+
+        var encr = new int[] { 4907, 4785, 4785 };
+        var decr = exercici2(encr, n, e);
+        return "Patata".equals(decr);
+      });
     }
   }
+
+  /*
+   * Aquest mètode `main` conté alguns exemples de paràmetres i dels resultats que haurien de donar
+   * els exercicis. Podeu utilitzar-los de guia i també en podeu afegir d'altres (no els tendrem en
+   * compte, però és molt recomanable).
+   *
+   * Podeu aprofitar el mètode `test` per comprovar fàcilment que un valor sigui `true`.
+   */
+    
+  
 
   /*
    * Aquest mètode `main` conté alguns exemples de paràmetres i dels resultats que haurien de donar
