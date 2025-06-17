@@ -180,170 +180,184 @@ class Entrega {
      *
      * Pista: Cercau informació sobre els nombres de Stirling.
      */
-      static int exercici1(int[] a) {
-          int n = a.length;
-          int[][] S = new int[n + 1][n + 1];
-          S[0][0] = 1;
-          for (int i = 1; i <= n; i++) {
-              for (int k = 1; k <= i; k++) {
-                  // S[i][k] = S(i-1, k-1) + k * S(i-1, k)
-                  S[i][k] = S[i - 1][k - 1] + k * S[i - 1][k];
-              }
-          }
-          int bell = 0;
-          // Suma de los Números de Stirling S(n, k) para obtener B_n.
-          for (int x : S[n]) {
-              bell += x;
-          }
-          return bell;
-      }
+static int exercici1(int[] array) {
+    int mida = array.length;
+    int[][] stirling = new int[mida + 1][mida + 1];
+
+    // Inicialitzem el cas base
+    stirling[0][0] = 1;
+
+    // Calculem els nombres d'Stirling de segona espècie
+    for (int i = 1; i <= mida; i++) {
+        for (int j = 1; j <= i; j++) {
+            stirling[i][j] = stirling[i - 1][j - 1] + j * stirling[i - 1][j];
+        }
+    }
+
+    // Suma dels valors d'Stirling per obtenir el número de Bell
+    int numeroBell = 0;
+    for (int valor : stirling[mida]) {
+        numeroBell += valor;
+    }
+
+    return numeroBell;
+}
       
      
-      static int exercici2(int[] a, int[][] rel) {
-          int n = a.length;
-          boolean[][] R = new boolean[n][n];
+static int exercici2(int[] elementos, int[][] relacion) {
+    int tamaño = elementos.length;
+    boolean[][] matrizRelacion = new boolean[tamaño][tamaño];
 
-          // Inicializar relación R.
-          for (int[] p : rel) {
-              int i = indexOf(a, p[0]);
-              int j = indexOf(a, p[1]);
-              if (i >= 0 && j >= 0) {
-                  R[i][j] = true;
-              }
-          }
+    // Inicializar matriz con relaciones dadas.
+    for (int[] par : relacion) {
+        int origen = indiceDe(elementos, par[0]);
+        int destino = indiceDe(elementos, par[1]);
+        if (origen >= 0 && destino >= 0) {
+            matrizRelacion[origen][destino] = true;
+        }
+    }
 
-          // Añadir reflexividad.
-          for (int i = 0; i < n; i++) {
-              R[i][i] = true;
-          }
+    // Añadir reflexividad (cada elemento relacionado consigo mismo).
+    for (int i = 0; i < tamaño; i++) {
+        matrizRelacion[i][i] = true;
+    }
 
-          // Calcular cierre transitivo (Floyd-Warshall).
-          for (int k = 0; k < n; k++) {
-              for (int i = 0; i < n; i++) {
-                  if (R[i][k]) {
-                      for (int j = 0; j < n; j++) {
-                          if (R[k][j]) {
-                              R[i][j] = true;
-                          }
-                      }
-                  }
-              }
-          }
+    // Calcular cierre transitivo (Floyd-Warshall).
+    for (int intermedio = 0; intermedio < tamaño; intermedio++) {
+        for (int i = 0; i < tamaño; i++) {
+            if (matrizRelacion[i][intermedio]) {
+                for (int j = 0; j < tamaño; j++) {
+                    if (matrizRelacion[intermedio][j]) {
+                        matrizRelacion[i][j] = true;
+                    }
+                }
+            }
+        }
+    }
 
-          // Comprobar antisimetría.
-          for (int i = 0; i < n; i++) {
-              for (int j = 0; j < n; j++) {
-                  if (i != j && R[i][j] && R[j][i]) {
-                      return -1; // No es antisimétrica.
-                  }
-              }
-          }
+    // Comprobar si la relación es antisimétrica.
+    for (int i = 0; i < tamaño; i++) {
+        for (int j = 0; j < tamaño; j++) {
+            if (i != j && matrizRelacion[i][j] && matrizRelacion[j][i]) {
+                return -1; // No antisimétrica
+            }
+        }
+    }
 
-          // Contar elementos en la relación final.
-          int count = 0;
-          for (boolean[] row : R) {
-              for (boolean b : row) {
-                  if (b) {
-                      count++;
-                  }
-              }
-          }
-          return count;
-      }
+    // Contar relaciones verdaderas.
+    int contador = 0;
+    for (boolean[] fila : matrizRelacion) {
+        for (boolean valor : fila) {
+            if (valor) contador++;
+        }
+    }
+
+    return contador;
+}
+
+// Método auxiliar para obtener el índice de un elemento en el array.
+private static int indiceDe(int[] array, int valor) {
+    for (int i = 0; i < array.length; i++) {
+        if (array[i] == valor) {
+            return i;
+        }
+    }
+    return -1; // No encontrado.
+}
     
-      static Integer exercici3(int[] a, int[][] rel, int[] x, boolean op) {
-          int n = a.length;
-          boolean[][] R = new boolean[n][n];
+static Integer exercici3(int[] elementos, int[][] relacion, int[] conjuntoX, boolean buscarCotaSuperior) {
+    int tamaño = elementos.length;
+    boolean[][] matrizRelacion = new boolean[tamaño][tamaño];
 
-          // Inicializar R con las relaciones.
-          for (int[] p : rel) {
-              int i = indexOf(a, p[0]);
-              int j = indexOf(a, p[1]);
-              if (i >= 0 && j >= 0) {
-                  R[i][j] = true;
-              }
-          }
+    // Inicializar matriz con relaciones dadas.
+    for (int[] par : relacion) {
+        int origen = indiceDe(elementos, par[0]);
+        int destino = indiceDe(elementos, par[1]);
+        if (origen >= 0 && destino >= 0) {
+            matrizRelacion[origen][destino] = true;
+        }
+    }
 
-          // Añadir reflexividad.
-          for (int i = 0; i < n; i++) {
-              R[i][i] = true;
-          }
+    // Añadir reflexividad.
+    for (int i = 0; i < tamaño; i++) {
+        matrizRelacion[i][i] = true;
+    }
 
-          // Calcular cierre transitivo.
-          for (int k = 0; k < n; k++) {
-              for (int i = 0; i < n; i++) {
-                  if (R[i][k]) {
-                      for (int j = 0; j < n; j++) {
-                          if (R[k][j]) {
-                              R[i][j] = true;
-                          }
-                      }
-                  }
-              }
-          }
+    // Calcular cierre transitivo (Floyd-Warshall).
+    for (int intermedio = 0; intermedio < tamaño; intermedio++) {
+        for (int i = 0; i < tamaño; i++) {
+            if (matrizRelacion[i][intermedio]) {
+                for (int j = 0; j < tamaño; j++) {
+                    if (matrizRelacion[intermedio][j]) {
+                        matrizRelacion[i][j] = true;
+                    }
+                }
+            }
+        }
+    }
 
-          // Mapear elementos de 'x' a índices.
-          List<Integer> xs = new ArrayList<>();
-          for (int v : x) {
-              int idx = indexOf(a, v);
-              if (idx >= 0) {
-                  xs.add(idx);
-              }
-          }
+    // Convertir elementos del conjunto X a índices.
+    List<Integer> indicesX = new ArrayList<>();
+    for (int valor : conjuntoX) {
+        int indice = indiceDe(elementos, valor);
+        if (indice >= 0) {
+            indicesX.add(indice);
+        }
+    }
 
-          List<Integer> LB = new ArrayList<>(), UB = new ArrayList<>();
+    List<Integer> cotasInferiores = new ArrayList<>(), cotasSuperiores = new ArrayList<>();
 
-          // Encontrar todas las cotas inferiores (LB) y superiores (UB).
-          for (int i = 0; i < n; i++) {
-              boolean lower = true, upper = true;
-              for (int e : xs) {
-                  if (!R[i][e]) {
-                      lower = false;
-                  }
-                  if (!R[e][i]) {
-                      upper = false;
-                  }
-                  if (!lower && !upper) {
-                      break;
-                  }
-              }
-              if (lower) {
-                  LB.add(i);
-              }
-              if (upper) {
-                  UB.add(i);
-              }
-          }
+    // Encontrar cotas inferiores y superiores.
+    for (int i = 0; i < tamaño; i++) {
+        boolean esInferior = true, esSuperior = true;
+        for (int elemento : indicesX) {
+            if (!matrizRelacion[i][elemento]) {
+                esInferior = false;
+            }
+            if (!matrizRelacion[elemento][i]) {
+                esSuperior = false;
+            }
+            if (!esInferior && !esSuperior) break;
+        }
+        if (esInferior) cotasInferiores.add(i);
+        if (esSuperior) cotasSuperiores.add(i);
+    }
 
-          if (!op) { // Buscar GLB (Greatest Lower Bound).
-              for (int p : LB) {
-                  boolean isGLB = true;
-                  for (int q : LB) {
-                      if (!R[q][p]) {
-                          isGLB = false;
-                          break;
-                      }
-                  }
-                  if (isGLB) {
-                      return a[p];
-                  }
-              }
-          } else { // Buscar LUB (Least Upper Bound).
-              for (int p : UB) {
-                  boolean isLUB = true;
-                  for (int q : UB) {
-                      if (!R[p][q]) {
-                          isLUB = false;
-                          break;
-                      }
-                  }
-                  if (isLUB) {
-                      return a[p];
-                  }
-              }
-          }
-          return null; // No se encontró GLB/LUB.
-      }
+    // Buscar cota requerida.
+    if (!buscarCotaSuperior) { // Buscar mayor cota inferior (GLB).
+        for (int candidato : cotasInferiores) {
+            boolean esMayor = true;
+            for (int otraCota : cotasInferiores) {
+                if (!matrizRelacion[otraCota][candidato]) {
+                    esMayor = false;
+                    break;
+                }
+            }
+            if (esMayor) return elementos[candidato];
+        }
+    } else { // Buscar menor cota superior (LUB).
+        for (int candidato : cotasSuperiores) {
+            boolean esMenor = true;
+            for (int otraCota : cotasSuperiores) {
+                if (!matrizRelacion[candidato][otraCota]) {
+                    esMenor = false;
+                    break;
+                }
+            }
+            if (esMenor) return elementos[candidato];
+        }
+    }
+
+    return null; // No encontrada la cota solicitada.
+}
+
+// Método auxiliar para obtener índice de un elemento.
+private static int indiceDe(int[] array, int valor) {
+    for (int i = 0; i < array.length; i++) {
+        if (array[i] == valor) return i;
+    }
+    return -1;
+}
 
       /*
      * Retorna el gráfico de la inversa (si es biyectiva),
@@ -358,78 +372,65 @@ class Entrega {
      *  - Sinó, el graf d'una inversa seva per la dreta (si existeix)
      *  - Sinó, null.
      */
-      static int[][] exercici4(int[] a, int[] b, Function<Integer, Integer> f) {
-          int m = b.length;
-          int[] counts = new int[m];
-          List<int[]> images = new ArrayList<>();
-          // Recollim totes les imatges x → f(x) i comptem preimatges per cada y∈b
-          for (int xVal : a) {
-              int yVal = f.apply(xVal);
-              images.add(new int[]{xVal, yVal});
-              int j = indexOf(b, yVal);
-              if (j >= 0) {
-                  counts[j]++;
-              }
-          }
-          boolean injectiva = true;
-          boolean sobreyectiva = true;
-          for (int c : counts) {
-              if (c == 0) {
-                  sobreyectiva = false;
-              }
-              if (c > 1) {
-                  injectiva = false;
-              }
-          }
-          // 1) Biyectiva → inversa exacta
-          if (injectiva && sobreyectiva) {
-              int[][] inv = new int[m][2];
-              for (int i = 0; i < m; i++) {
-                  inv[i] = new int[]{b[i], findPreimage(images, b[i])};
-              }
-              return lexSorted(inv);
-          }
-          // 2) Injectiva només → inversa per l'esquerra
-          if (injectiva) {
-              int[][] invL = new int[m][2];
-              for (int i = 0; i < m; i++) {
-                  invL[i] = new int[]{b[i], findPreimage(images, b[i])};
-              }
-              return lexSorted(invL);
-          }
-          // 3) Sobreyectiva només → inversa per la dreta
-          if (sobreyectiva) {
-              int[][] invR = new int[m][2];
-              for (int i = 0; i < m; i++) {
-                  invR[i] = new int[]{b[i], findPreimage(images, b[i])};
-              }
-              return lexSorted(invR);
-          }
-          // 4) Ni injectiva ni sobreyectiva → no hi ha inversa
-          return null;
-      }
+static int[][] exercici4(int[] conjuntoA, int[] conjuntoB, Function<Integer, Integer> funcion) {
+    int tamañoB = conjuntoB.length;
+    int[] contadorPreimagenes = new int[tamañoB];
+    List<int[]> imagenes = new ArrayList<>();
 
-// Helper: retorna algun x tal que f(x)=y, o un element arbitrari de a
-      private static int findPreimage(List<int[]> images, int y) {
-          for (int[] p : images) {
-              if (p[1] == y) {
-                  return p[0];
-              }
-          }
-          return images.get(0)[0];
-      }
-        private static int indexOf(int[] arr, int value) {
-        for (int i = 0; i < arr.length; i++) {
-            if (arr[i] == value) {
-        return i;
+    // Calcular imagenes y contar preimagenes
+    for (int elementoA : conjuntoA) {
+        int elementoB = funcion.apply(elementoA);
+        imagenes.add(new int[]{elementoA, elementoB});
+        int indiceB = indiceDe(conjuntoB, elementoB);
+        if (indiceB >= 0) {
+            contadorPreimagenes[indiceB]++;
+        }
     }
-  }
-  return -1;
 
+    boolean esInyectiva = true;
+    boolean esSobreyectiva = true;
 
-    /*
-     * Aquí teniu alguns exemples i proves relacionades amb aquests exercicis (vegeu `main`)
-     */
+    // Verificar si es inyectiva y/o sobreyectiva
+    for (int contador : contadorPreimagenes) {
+        if (contador == 0) esSobreyectiva = false;
+        if (contador > 1) esInyectiva = false;
+    }
+
+    // Preparar inversa según el tipo de función
+    if (esInyectiva || esSobreyectiva) {
+        int[][] inversa = new int[tamañoB][2];
+        for (int i = 0; i < tamañoB; i++) {
+            inversa[i] = new int[]{conjuntoB[i], encontrarPreimagen(imagenes, conjuntoB[i])};
+        }
+        return ordenarLexico(inversa);
+    }
+
+    return null; // Ni inyectiva ni sobreyectiva, no hay inversa.
+}
+
+// Método auxiliar para encontrar preimagen.
+private static int encontrarPreimagen(List<int[]> imagenes, int valorBuscado) {
+    for (int[] par : imagenes) {
+        if (par[1] == valorBuscado) return par[0];
+    }
+    return imagenes.get(0)[0];
+}
+
+// Método auxiliar para ordenar lexicográficamente
+private static int[][] ordenarLexico(int[][] array) {
+    Arrays.sort(array, (par1, par2) -> {
+        if (par1[0] != par2[0]) return Integer.compare(par1[0], par2[0]);
+        return Integer.compare(par1[1], par2[1]);
+    });
+    return array;
+}
+
+// Método auxiliar para obtener índice.
+private static int indiceDe(int[] array, int valor) {
+    for (int i = 0; i < array.length; i++) {
+        if (array[i] == valor) return i;
+    }
+    return -1;
 }
 
     
@@ -562,104 +563,96 @@ class Entrega {
     /*
      * Determinau si el graf `g` (no dirigit) té cicles.
      */
-    static boolean exercici1(int[][] g) {
-          int n = g.length;
-          boolean[] visited = new boolean[n];
-          for (int v = 0; v < n; v++) {
-              if (!visited[v]) {
-                  if (dfsCycle(v, -1, g, visited)) {
-                      return true;
-                  }
-              }
-          }
-          return false;
-      }
+static boolean exercici1(int[][] grafo) {
+    int tamaño = grafo.length;
+    boolean[] visitado = new boolean[tamaño];
 
-      private static boolean dfsCycle(int v, int parent, int[][] g, boolean[] visited) {
-          visited[v] = true;
-          for (int nei : g[v]) {
-              if (nei == parent) {
-                  continue;
-              }
-              // Si l'element veí ja s'ha visitat, hi ha un cicle
-              if (visited[nei]) {
-                  return true;
-              }
-              // Si des d'aquest veí es detecta un cicle recursivament
-              if (dfsCycle(nei, v, g, visited)) {
-                  return true;
-              }
-          }
-          return false;
-      }
+    // Verificar cada nodo del grafo
+    for (int nodo = 0; nodo < tamaño; nodo++) {
+        if (!visitado[nodo]) {
+            if (buscarCiclo(nodo, -1, grafo, visitado)) {
+                return true; // Ciclo encontrado
+            }
+        }
+    }
+    return false; // No hay ciclos
+}
+
+// Método auxiliar para buscar ciclos utilizando DFS.
+private static boolean buscarCiclo(int actual, int padre, int[][] grafo, boolean[] visitado) {
+    visitado[actual] = true;
+    for (int vecino : grafo[actual]) {
+        if (vecino == padre) continue;
+        if (visitado[vecino]) return true; // Ciclo encontrado
+        if (buscarCiclo(vecino, actual, grafo, visitado)) return true;
+    }
+    return false;
 
     /*
      * Determinau si els dos grafs són isomorfs. Podeu suposar que cap dels dos té ordre major que
      * 10.
      */
-      static boolean exercici2(int[][] g1, int[][] g2) {
-          int n = g1.length;
-          if (n != g2.length) {
-              return false;
-          }
+     static boolean exercici2(int[][] grafo1, int[][] grafo2) {
+    int tamaño = grafo1.length;
+    if (tamaño != grafo2.length) {
+        return false;
+    }
 
-          int[] deg1 = new int[n], deg2 = new int[n];
-          boolean[][] adj1 = new boolean[n][n], adj2 = new boolean[n][n];
-          for (int i = 0; i < n; i++) {
-              deg1[i] = g1[i].length;
-              for (int j : g1[i]) {
-                  adj1[i][j] = true;
-                  adj1[j][i] = true; // Asegura que la matriz es simétrica para grafos no dirigidos
-              }
-              deg2[i] = g2[i].length;
-              for (int j : g2[i]) {
-                  adj2[i][j] = true;
-              }
-          }
+    int[] grados1 = new int[tamaño], grados2 = new int[tamaño];
+    boolean[][] ady1 = new boolean[tamaño][tamaño], ady2 = new boolean[tamaño][tamaño];
 
-          int[] perm = new int[n];
-          boolean[] used = new boolean[n];
-          return isoBacktrack(0, n, deg1, deg2, adj1, adj2, perm, used);
-      }
+    // Construir matrices de adyacencia y grados de los vértices
+    for (int i = 0; i < tamaño; i++) {
+        grados1[i] = grafo1[i].length;
+        for (int vecino : grafo1[i]) {
+            ady1[i][vecino] = true;
+            ady1[vecino][i] = true; // Simetría
+        }
+        grados2[i] = grafo2[i].length;
+        for (int vecino : grafo2[i]) {
+            ady2[i][vecino] = true;
+        }
+    }
 
-      private static boolean isoBacktrack(int idx, int n,
-              int[] deg1, int[] deg2,
-              boolean[][] adj1, boolean[][] adj2,
-              int[] perm, boolean[] used) {
-          if (idx == n) {
-              // Si hemos asignado una permutación para todos los vértices, hemos encontrado un isomorfismo.
-              return true;
-          }
-          for (int j = 0; j < n; j++) {
-              // Poda: Si el vértice j ya está usado o si los grados no coinciden, saltar.
-              if (used[j] || deg1[idx] != deg2[j]) {
-                  continue;
-              }
+    int[] permutacion = new int[tamaño];
+    boolean[] usados = new boolean[tamaño];
 
-              perm[idx] = j; // Asignar el vértice j de g2 al vértice idx de g1
+    return buscarIsomorfismo(0, tamaño, grados1, grados2, ady1, ady2, permutacion, usados);
+}
 
-              boolean ok = true;
-              // Verificar la consistencia de las adyacencias con los vértices ya mapeados (0 a idx-1)
-              for (int k = 0; k < idx; k++) {
-                  // La adyacencia entre (idx, k) en g1 debe coincidir con la adyacencia entre (perm[idx], perm[k]) en g2.
-                  if (adj1[idx][k] != adj2[perm[idx]][perm[k]]) {
-                      ok = false;
-                      break;
-                  }
-              }
-              if (!ok) {
-                  // Si la adyacencia no es consistente, esta permutación no es válida, probar con el siguiente j.
-                  continue;
-              }
+// Método auxiliar para buscar isomorfismo usando backtracking
+private static boolean buscarIsomorfismo(int indice, int tamaño,
+                                         int[] grados1, int[] grados2,
+                                         boolean[][] ady1, boolean[][] ady2,
+                                         int[] permutacion, boolean[] usados) {
+    if (indice == tamaño) {
+        return true; // Isomorfismo encontrado
+    }
 
-              used[j] = true; // Marcar j como usado
-              if (isoBacktrack(idx + 1, n, deg1, deg2, adj1, adj2, perm, used)) {
-                  return true; // Si la recursión encuentra una solución, propagarla.
-              }
-              used[j] = false; // Backtrack: desmarcar j para explorar otras permutaciones.
-          }
-          return false; // No se encontró ninguna permutación válida para idx.
-      }
+    for (int candidato = 0; candidato < tamaño; candidato++) {
+        if (usados[candidato] || grados1[indice] != grados2[candidato]) continue;
+
+        permutacion[indice] = candidato;
+        boolean valido = true;
+
+        for (int previo = 0; previo < indice; previo++) {
+            if (ady1[indice][previo] != ady2[permutacion[indice]][permutacion[previo]]) {
+                valido = false;
+                break;
+            }
+        }
+
+        if (!valido) continue;
+
+        usados[candidato] = true;
+        if (buscarIsomorfismo(indice + 1, tamaño, grados1, grados2, ady1, ady2, permutacion, usados)) {
+            return true;
+        }
+        usados[candidato] = false;
+    }
+
+    return false; // No se encontró un isomorfismo válido
+}
     /*
      * Determinau si el graf `g` (no dirigit) és un arbre. Si ho és, retornau el seu recorregut en
      * postordre desde el vèrtex `r`. Sinó, retornau null;
@@ -667,53 +660,48 @@ class Entrega {
      * En cas de ser un arbre, assumiu que l'ordre dels fills vé donat per l'array de veïns de cada
      * vèrtex.
      */
-      static int[] exercici3(int[][] g, int r) {
-          int n = g.length;
-          boolean[] visited = new boolean[n];
-          List<Integer> post = new ArrayList<>();
+static int[] exercici3(int[][] grafo, int raiz) {
+    int tamaño = grafo.length;
+    boolean[] visitado = new boolean[tamaño];
+    List<Integer> recorridoPostorden = new ArrayList<>();
 
-          // Un grafo es un árbol si es acíclico y conexo.
-          // Paso 1: DFS para detectar ciclos y construir el postorden.
-          if (!dfsTree(r, -1, g, visited, post)) {
-              return null; // Ciclo detectado, no es un árbol.
-          }
+    // Paso 1: Comprobar aciclicidad y generar recorrido postorden.
+    if (!dfsArbol(raiz, -1, grafo, visitado, recorridoPostorden)) {
+        return null; // Ciclo detectado, no es un árbol.
+    }
 
-          // Paso 2: Verificar la conexidad.
-          for (boolean v : visited) {
-              if (!v) {
-                  return null; // No todos los nodos fueron visitados, no es un árbol.
-              }
-          }
+    // Paso 2: Comprobar si todos los nodos fueron visitados (conexo).
+    for (boolean nodoVisitado : visitado) {
+        if (!nodoVisitado) {
+            return null; // No conexo, no es un árbol.
+        }
+    }
 
-          // Si es acíclico y conexo, es un árbol. Convertir postorden a array.
-          int[] res = new int[post.size()];
-          for (int i = 0; i < res.length; i++) {
-              res[i] = post.get(i);
-          }
-          return res;
-      }
+    // Convertir lista de postorden a arreglo.
+    int[] resultado = new int[recorridoPostorden.size()];
+    for (int i = 0; i < resultado.length; i++) {
+        resultado[i] = recorridoPostorden.get(i);
+    }
 
-      private static boolean dfsTree(int v, int parent,
-              int[][] g, boolean[] visited, List<Integer> post) {
-          visited[v] = true; // Marcar como visitado.
+    return resultado;
+}
 
-          for (int nei : g[v]) {
-              if (nei == parent) {
-                  continue; // Ignorar el padre.
-              }
+// Método auxiliar para realizar DFS y detectar ciclos.
+private static boolean dfsArbol(int actual, int padre,
+                                int[][] grafo, boolean[] visitado, List<Integer> postorden) {
+    visitado[actual] = true;
 
-              if (visited[nei]) {
-                  return false; // Vecino ya visitado (y no es el padre) -> ciclo.
-              }
+    for (int vecino : grafo[actual]) {
+        if (vecino == padre) continue;
 
-              if (!dfsTree(nei, v, g, visited, post)) {
-                  return false; // Ciclo encontrado en un subárbol.
-              }
-          }
+        if (visitado[vecino] || !dfsArbol(vecino, actual, grafo, visitado, postorden)) {
+            return false; // Ciclo detectado.
+        }
+    }
 
-          post.add(v); // Añadir al postorden.
-          return true; // No hay ciclo en este subárbol.
-      }
+    postorden.add(actual);
+    return true;
+}
 
 
     /*
@@ -740,70 +728,57 @@ class Entrega {
      *
      * Si és impossible, retornau -1.
      */
-      static int exercici4(char[][] mapa) {
-          // Nombre de files i columnes
-          int rows = mapa.length, cols = mapa[0].length;
-          // Índex lineal de l'origen 'O'
-          int start = -1;
-          // Cerquem 'O' i guardem la seva posició (fila * cols + columna)
-          for (int i = 0; i < rows && start < 0; i++) {
-              for (int j = 0; j < cols; j++) {
-                  if (mapa[i][j] == 'O') {
-                      start = i * cols + j;
-                      break;  // aturem el bucle interior quan trobem 'O'
-                  }
-              }
-          }
-          // Si no hi ha cap 'O', retornem -1
-          if (start < 0) {
-              return -1;
-          }
+   static int exercici4(char[][] mapa) {
+    int filas = mapa.length, columnas = mapa[0].length;
+    int inicio = -1;
 
-          // Mida màxima de la cua = total de cel·les
-          int max = rows * cols;
-          // q: cua per BFS, dist: distàncies inicialitzades a -1 (no visitat)
-          int[] q = new int[max], dist = new int[max];
-          Arrays.fill(dist, -1);
-          // Variables per gestionar la cua: head = índex de capçalera, tail = índex de cua
-          int head = 0, tail = 0;
-          // Iniciem BFS des de 'start'
-          q[tail++] = start;
-          dist[start] = 0;
-
-          // Moviments en 4 direccions: baix, dalt, dreta, esquerra
-          int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
-          // Processam la cua fins buidar-la
-          while (head < tail) {
-              // Desencolem la cel·la actual
-              int cur = q[head++];
-              int cr = cur / cols, cc = cur % cols;  // fila i columna corresponents
-              // Exploració dels veïns
-              for (int[] d : dirs) {
-                  int nr = cr + d[0], nc = cc + d[1];
-                  // Saltar si surtim del mapa
-                  if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) {
-                      continue;
-                  }
-                  char c = mapa[nr][nc];
-                  int idx = nr * cols + nc;  // índex lineal del veí
-                  // Saltar si és mur '#' o ja visitat (dist[idx] != -1)
-                  if (c == '#' || dist[idx] != -1) {
-                      continue;
-                  }
-                  // Assignem la distància (dist del pare + 1)
-                  dist[idx] = dist[cur] + 1;
-                  // Si és destí 'D', retornem distància mínima trobada
-                  if (c == 'D') {
-                      return dist[idx];
-                  }
-                  // Enfilem aquest veí per continuar el BFS
-                  q[tail++] = idx;
-              }
-          }
-          // Si acabem i no trobem 'D', retornem -1
-          return -1;
+    // Buscar posición inicial 'O'
+    for (int i = 0; i < filas && inicio < 0; i++) {
+        for (int j = 0; j < columnas; j++) {
+            if (mapa[i][j] == 'O') {
+                inicio = i * columnas + j;
+                break;
+            }
         }
+    }
 
+    if (inicio < 0) return -1; // No encontrado 'O'
+
+    int tamañoMapa = filas * columnas;
+    int[] cola = new int[tamañoMapa], distancias = new int[tamañoMapa];
+    Arrays.fill(distancias, -1);
+
+    int cabeza = 0, colaFin = 0;
+    cola[colaFin++] = inicio;
+    distancias[inicio] = 0;
+
+    // Movimientos permitidos: abajo, arriba, derecha, izquierda
+    int[][] movimientos = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+
+    while (cabeza < colaFin) {
+        int actual = cola[cabeza++];
+        int filaActual = actual / columnas, columnaActual = actual % columnas;
+
+        for (int[] mov : movimientos) {
+            int nuevaFila = filaActual + mov[0], nuevaColumna = columnaActual + mov[1];
+
+            if (nuevaFila < 0 || nuevaFila >= filas || nuevaColumna < 0 || nuevaColumna >= columnas) continue;
+
+            char celda = mapa[nuevaFila][nuevaColumna];
+            int indice = nuevaFila * columnas + nuevaColumna;
+
+            if (celda == '#' || distancias[indice] != -1) continue;
+
+            distancias[indice] = distancias[actual] + 1;
+
+            if (celda == 'D') return distancias[indice];
+
+            cola[colaFin++] = indice;
+        }
+    }
+
+    return -1; // No hay camino hasta 'D'
+}
     /*
      * Aquí teniu alguns exemples i proves relacionades amb aquests exercicis (vegeu `main`)
      */
