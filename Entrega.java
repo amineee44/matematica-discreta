@@ -55,80 +55,88 @@ class Entrega {
   /*
    * Aquí teniu els exercicis del Tema 1 (Lògica).
    */
-  static class Tema1 {
-    static final char CONJ = '∧';
-    static final char DISJ = '∨';
-    static final char IMPL = '→';
-    static final char NAND = '.';
+    static class Tema1 {
 
-    static int exercici1(char[] ops, int[] vars) {
-        int numVariables = Arrays.stream(vars).max().orElse(-1) + 1;
-        if (numVariables == 0) return -1;
-        
-        boolean isTautology = true;
-        boolean isContradiction = true;
-        
-        int totalCombinations = 1 << numVariables;
-        for (int mask = 0; mask < totalCombinations; mask++) {
-            boolean[] values = new boolean[numVariables];
-            for (int i = 0; i < numVariables; i++) {
-                values[i] = ((mask >> i) & 1) == 1;
-            }
-            
-            boolean result = values[vars[0]];
-            for (int i = 0; i < ops.length; i++) {
-                boolean next = values[vars[i+1]];
-                switch (ops[i]) {
-                    case CONJ:
-                        result = result && next;
-                        break;
-                    case DISJ:
-                        result = result || next;
-                        break;
-                    case IMPL:
-                        result = !result || next;
-                        break;
-                    case NAND:
-                        result = !(result && next);
-                        break;
-                }
-            }
-            
-            if (result) {
-                isContradiction = false;
-            } else {
-                isTautology = false;
-            }
-            
-            if (!isTautology && !isContradiction) {
+        static final char CONJ = '∧';
+        static final char DISJ = '∨';
+        static final char IMPL = '→';
+        static final char NAND = '.';
+
+        // Devuelve 1 si es tautología, 0 si es contradicción, -1 en otro caso
+        static int exercici1(char[] operadores, int[] variables) {
+            int numVariables = Arrays.stream(variables).max().orElse(-1) + 1;
+            if (numVariables == 0) {
                 return -1;
             }
-        }
-        
-        if (isTautology) return 1;
-        if (isContradiction) return 0;
-        return -1;
-    }
 
-    static boolean exercici2(int[] universe, Predicate<Integer> p, Predicate<Integer> q) {
-        boolean forAllP = true;
-        for (int x : universe) {
-            if (!p.test(x)) {
-                forAllP = false;
-                break;
+            boolean esTautologia = true;
+            boolean esContradiccion = true;
+            int totalCombinaciones = 1 << numVariables;
+
+            // Probar todas las combinaciones de valores
+            for (int mascara = 0; mascara < totalCombinaciones; mascara++) {
+                boolean[] valores = new boolean[numVariables];
+                for (int i = 0; i < numVariables; i++) {
+                    valores[i] = ((mascara >> i) & 1) == 1;
+                }
+
+                boolean resultado = valores[variables[0]];
+                for (int i = 0; i < operadores.length; i++) {
+                    boolean siguiente = valores[variables[i + 1]];
+                    switch (operadores[i]) {
+                        case CONJ:
+                            resultado = resultado && siguiente;
+                            break;
+                        case DISJ:
+                            resultado = resultado || siguiente;
+                            break;
+                        case IMPL:
+                            resultado = !resultado || siguiente;
+                            break;
+                        case NAND:
+                            resultado = !(resultado && siguiente);
+                            break;
+                    }
+                }
+                if (resultado) {
+                    esContradiccion = false;
+                } else {
+                    esTautologia = false;
+                }
+
+                if (!esTautologia && !esContradiccion) {
+                    return -1;
+                }
             }
-        }
-        
-        int countQ = 0;
-        for (int x : universe) {
-            if (q.test(x)) {
-                countQ++;
+            if (esTautologia) {
+                return 1;
             }
+            if (esContradiccion) {
+                return 0;
+            }
+            return -1;
         }
-        boolean existsUniqueQ = (countQ == 1);
-        
-        return forAllP == existsUniqueQ;
-    }
+
+        // Devuelve true si "para todo x: p(x)" equivale a "existe un único x tal que q(x)"
+        static boolean exercici2(int[] universo, Predicate<Integer> p, Predicate<Integer> q) {
+            boolean todosCumplenP = true;
+            for (int x : universo) {
+                if (!p.test(x)) {
+                    todosCumplenP = false;
+                    break;
+                }
+            }
+
+            int cuentaQ = 0;
+            for (int x : universo) {
+                if (q.test(x)) {
+                    cuentaQ++;
+                }
+            }
+            boolean existeUnicoQ = (cuentaQ == 1);
+
+            return todosCumplenP == existeUnicoQ;
+        }
 
     static void tests() {
       // Exercici 1
@@ -254,17 +262,8 @@ static int exercici2(int[] elementos, int[][] relacion) {
 
     return contador;
 }
-
 // Método auxiliar para obtener el índice de un elemento en el array.
-private static int indiceDe(int[] array, int valor) {
-    for (int i = 0; i < array.length; i++) {
-        if (array[i] == valor) {
-            return i;
-        }
-    }
-    return -1; // No encontrado.
-}
-    
+
 static Integer exercici3(int[] elementos, int[][] relacion, int[] conjuntoX, boolean buscarCotaSuperior) {
     int tamaño = elementos.length;
     boolean[][] matrizRelacion = new boolean[tamaño][tamaño];
@@ -283,7 +282,7 @@ static Integer exercici3(int[] elementos, int[][] relacion, int[] conjuntoX, boo
         matrizRelacion[i][i] = true;
     }
 
-    // Calcular cierre transitivo (Floyd-Warshall).
+    // Calcular cierre transitivo
     for (int intermedio = 0; intermedio < tamaño; intermedio++) {
         for (int i = 0; i < tamaño; i++) {
             if (matrizRelacion[i][intermedio]) {
@@ -349,14 +348,6 @@ static Integer exercici3(int[] elementos, int[][] relacion, int[] conjuntoX, boo
     }
 
     return null; // No encontrada la cota solicitada.
-}
-
-// Método auxiliar para obtener índice de un elemento.
-private static int indiceDe(int[] array, int valor) {
-    for (int i = 0; i < array.length; i++) {
-        if (array[i] == valor) return i;
-    }
-    return -1;
 }
 
       /*
@@ -563,30 +554,39 @@ private static int indiceDe(int[] array, int valor) {
     /*
      * Determinau si el graf `g` (no dirigit) té cicles.
      */
-static boolean exercici1(int[][] grafo) {
-    int tamaño = grafo.length;
-    boolean[] visitado = new boolean[tamaño];
+      static boolean exercici1(int[][] grafo) {
+          int tamaño = grafo.length;
+          boolean[] visitado = new boolean[tamaño];
 
-    // Verificar cada nodo del grafo
-    for (int nodo = 0; nodo < tamaño; nodo++) {
-        if (!visitado[nodo]) {
-            if (buscarCiclo(nodo, -1, grafo, visitado)) {
-                return true; // Ciclo encontrado
-            }
-        }
-    }
-    return false; // No hay ciclos
-}
+          // Verificar cada nodo del grafo
+          for (int nodo = 0; nodo < tamaño; nodo++) {
+              if (!visitado[nodo]) {
+                  if (buscarCiclo(nodo, -1, grafo, visitado)) {
+                      return true; // Ciclo encontrado
+                  }
+              }
+          }
+          return false; // No hay ciclos
+      }
 
 // Método auxiliar para buscar ciclos utilizando DFS.
-private static boolean buscarCiclo(int actual, int padre, int[][] grafo, boolean[] visitado) {
-    visitado[actual] = true;
-    for (int vecino : grafo[actual]) {
-        if (vecino == padre) continue;
-        if (visitado[vecino]) return true; // Ciclo encontrado
-        if (buscarCiclo(vecino, actual, grafo, visitado)) return true;
-    }
-    return false;
+      private static boolean buscarCiclo(int actual, int padre, int[][] grafo, boolean[] visitado) {
+          visitado[actual] = true;
+
+          for (int vecino : grafo[actual]) {
+              if (vecino == padre) {
+                  continue;
+              }
+              if (visitado[vecino]) {
+                  return true; // Ciclo encontrado
+              }
+              if (buscarCiclo(vecino, actual, grafo, visitado)) {
+                  return true;
+              }
+          }
+
+          return false;
+      }
 
     /*
      * Determinau si els dos grafs són isomorfs. Podeu suposar que cap dels dos té ordre major que
@@ -1000,5 +1000,4 @@ private static boolean dfsArbol(int actual, int padre,
     }
   }
 }
-
 // vim: set textwidth=100 shiftwidth=2 expandtab :
