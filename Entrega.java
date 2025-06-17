@@ -857,7 +857,7 @@ private static boolean dfsArbol(int actual, int padre,
      */
         
     // función que calcula potencias con módulo para evitar desbordamientos: (base elevado a exp) módulo mod
-    static int modPow(int base, int exp, int mod) {
+    static int potenciaModular(int base, int exp, int mod) {
         long res = 1, b = base % mod;
         for (; exp > 0; exp >>= 1) {
             if ((exp & 1) == 1) res = (res * b) % mod;
@@ -867,7 +867,7 @@ private static boolean dfsArbol(int actual, int padre,
     }
       
     // inverso de e mod n : (a*x) % m = 1
-    static int modInverse(int a, int m) {
+    static int inversoModular(int a, int m) {
         int m0 = m, t, x0 = 0, x1 = 1;
         while (a > 1) {
             int q = a / m;
@@ -883,7 +883,7 @@ private static boolean dfsArbol(int actual, int padre,
         byte[] bytes = msg.getBytes();
         for (int i = 0, j = 0; i < bytes.length; i += 2, j++) {
             int val = (bytes[i] << 7) + bytes[i + 1];  
-            res[j] = modPow(val, e, n);
+            res[j] = potenciaModular(val, e, n);
         }
         return res;
     }
@@ -915,17 +915,17 @@ private static boolean dfsArbol(int actual, int padre,
     int phi = (p - 1) * (q - 1);
 
     // hallamos d, la clave privada que cumple con (d*e) % phi = 1
-    int d = modInverse(e, phi);
+    int d = inversoModular(e, phi);
 
     // usamos la clave privada d para descifrar cada bloque cifrado 
     char[] descifrado = new char[m.length * 2];
     for (int i = 0; i < m.length; i++) {
-        int decodificado = modPow(m[i], d, n);
+        int decodificado = potenciaModular(m[i], d, n);
 
     // separamos el numero en 2 caracteres originales usando base 128 en orden big-endian (primero el mas significativo)
     descifrado[i * 2]     = (char) (decodificado >> 7);     // dividir entre 128
     descifrado[i * 2 + 1] = (char) (decodificado & 0x7F);   // resto mod 128
-}
+    }
 
     // reconstruimos mensaje original y lo devolvemos
     return new String(descifrado);
